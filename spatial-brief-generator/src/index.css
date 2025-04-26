@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.wheel-spin {
+  animation: spin 5s cubic-bezier(0.1, 0.7, 0.1, 1) forwards;
+}
+
+.surface-spin {
+  animation: spin 4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+} 
