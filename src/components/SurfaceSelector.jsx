@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import useSlotMachineAnimation from '../hooks/useSlotMachineAnimation';
 import SlotMachine from './SlotMachine';
 
@@ -17,12 +17,15 @@ const SurfaceSelector = ({ surfaces, selectedSurface, onSelectSurface, onRandomi
     'New Frontiers': '🚀'
   };
 
-  // Create surface options with icons
-  const surfaceOptions = surfaces.map(surface => ({
-    id: surface,
-    name: surface,
-    icon: surfaceIcons[surface] || '📋'
-  }));
+  // Create surface options with icons (memoized for stable reference)
+  const surfaceOptions = useMemo(() =>
+    surfaces.map(surface => ({
+      id: surface,
+      name: surface,
+      icon: surfaceIcons[surface] || '📋'
+    })),
+  [surfaces]
+  );
 
   // Set up the slot machine animation
   const { isAnimating, displayedOptions, startAnimation, scrollPosition, selectedOption } = useSlotMachineAnimation(

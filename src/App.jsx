@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import BrandSelector from './components/BrandSelector';
 import SurfaceSelector from './components/SurfaceSelector';
 import BriefDisplay from './components/BriefDisplay';
@@ -9,9 +9,27 @@ function App() {
   const [selectedSurface, setSelectedSurface] = useState(null);
   const [generatedBrief, setGeneratedBrief] = useState(null);
 
-  // Define the brand and surface options
-  const brands = ['Coca-Cola', 'Fanta', 'Powerade', 'Minute Maid', 'Jack&Coke'];
-  const surfaces = [
+  // Define the initial brand options as objects
+  const initialBrandOptions = [
+    { id: 'Coca-Cola', name: 'Coca-Cola', color: 'brand-coke', emoji: '🥤' },
+    { id: 'Fanta', name: 'Fanta', color: 'brand-fanta', emoji: '🍊' },
+    { id: 'Powerade', name: 'Powerade', color: 'brand-powerade', emoji: '🔵' },
+    { id: 'Minute Maid', name: 'Minute Maid', color: 'brand-minutemaid', emoji: '🧃' },
+    { id: 'Jack&Coke', name: 'Jack&Coke', color: 'brand-jackcoke', emoji: '⚫' }
+  ];
+  const [brands, setBrands] = useState(initialBrandOptions);
+  // Handlers to add and remove brands
+  const handleAddBrand = (brand) => {
+    setBrands(prev => [...prev, brand]);
+  };
+  const handleRemoveBrand = (brandId) => {
+    setBrands(prev => prev.filter(b => b.id !== brandId));
+    // If current selected matches removed, clear it
+    if (selectedBrand === brandId) setSelectedBrand(null);
+  };
+
+  // Define the static surface options (memoized to maintain stable reference)
+  const surfaces = useMemo(() => [
     'On-Pack', 
     'Digital OOH', 
     'Virtual Worlds', 
@@ -20,7 +38,7 @@ function App() {
     'Influencer Collaborations', 
     'Gaming & Interactive Play', 
     'New Frontiers'
-  ];
+  ], []);
 
   const handleRandomizeBrand = () => {
     // This function will be called after the animation finishes 
@@ -98,10 +116,9 @@ function App() {
     return brandMap[brand] || '';
   };
 
-  // Get brand text color class
+  // Get brand text color class (for BriefDisplay labels)
   const getBrandTextClass = (brand) => {
     if (!brand) return '';
-    
     const brandMap = {
       'Coca-Cola': 'brand-text-coke',
       'Fanta': 'brand-text-fanta',
@@ -109,9 +126,12 @@ function App() {
       'Minute Maid': 'brand-text-minutemaid',
       'Jack&Coke': 'brand-text-jackcoke'
     };
-    
     return brandMap[brand] || '';
   };
+
+  // Determine raw color for selected brand from state (could be hex or Tailwind class)
+  const selectedBrandObj = brands.find(b => b.id === selectedBrand);
+  const selectedBrandColor = selectedBrandObj ? selectedBrandObj.color : '';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
@@ -148,6 +168,8 @@ function App() {
                 selectedBrand={selectedBrand}
                 onSelectBrand={setSelectedBrand}
                 onRandomize={handleRandomizeBrand}
+                onAddBrand={handleAddBrand}
+                onRemoveBrand={handleRemoveBrand}
               />
               
               <div className="mt-8 flex justify-end">
@@ -155,10 +177,11 @@ function App() {
                   onClick={handleNext}
                   disabled={!selectedBrand}
                   className={`py-3 px-6 rounded-full text-lg font-semibold transition-all ${
-                    selectedBrand 
-                      ? `${getBrandColorClass(selectedBrand)} text-white hover:opacity-90` 
+                    selectedBrand
+                      ? `${selectedBrandColor.startsWith('#') ? '' : selectedBrandColor} text-white hover:opacity-90`
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
+                  style={selectedBrand && selectedBrandColor.startsWith('#') ? { backgroundColor: selectedBrandColor } : {}}
                 >
                   Next Step →
                 </button>
@@ -180,7 +203,10 @@ function App() {
                 <div className="mb-6 flex justify-center">
                   <div className="p-4 rounded-xl border border-gray-200 flex items-center">
                     <span className="font-medium text-gray-700 mr-2">Selected Brand:</span>
-                    <span className={`${getBrandColorClass(selectedBrand)} text-white font-bold py-1 px-3 rounded-md`}>
+                    <span
+                      className={`${selectedBrandColor.startsWith('#') ? '' : selectedBrandColor} text-white font-bold py-1 px-3 rounded-md`}
+                      style={selectedBrandColor.startsWith('#') ? { backgroundColor: selectedBrandColor } : {}}
+                    >
                       {selectedBrand}
                     </span>
                   </div>
@@ -205,10 +231,11 @@ function App() {
                   onClick={generateBrief}
                   disabled={!selectedSurface}
                   className={`py-3 px-6 rounded-full text-lg font-semibold transition-all ${
-                    selectedSurface 
-                      ? `${getBrandColorClass(selectedBrand)} text-white hover:opacity-90`
+                    selectedSurface
+                      ? `${selectedBrandColor.startsWith('#') ? '' : selectedBrandColor} text-white hover:opacity-90`
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
+                  style={selectedSurface && selectedBrandColor.startsWith('#') ? { backgroundColor: selectedBrandColor } : {}}
                 >
                   Generate Brief
                 </button>
@@ -226,11 +253,12 @@ function App() {
             </header>
             
             <div className="brief-card rounded-2xl p-8">
-              <BriefDisplay 
+              <BriefDisplay
                 brand={selectedBrand}
                 surface={selectedSurface}
                 brief={generatedBrief}
                 brandColorClass={getBrandTextClass(selectedBrand)}
+                brandEmoji={selectedBrandObj ? selectedBrandObj.emoji : ''}
               />
               
               <div className="mt-8 flex justify-between">
