@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import BrandSelector from './components/BrandSelector';
 import SurfaceSelector from './components/SurfaceSelector';
 import BriefDisplay from './components/BriefDisplay';
@@ -17,7 +17,34 @@ function App() {
     { id: 'Minute Maid', name: 'Minute Maid', color: 'brand-minutemaid', emoji: '🧃' },
     { id: 'Jack&Coke', name: 'Jack&Coke', color: 'brand-jackcoke', emoji: '⚫' }
   ];
-  const [brands, setBrands] = useState(initialBrandOptions);
+  const [brands, setBrands] = useState(() => {
+    try {
+      const saved = localStorage.getItem('brands');
+      if (saved) return JSON.parse(saved);
+      return initialBrandOptions;
+    } catch {
+      // Corrupt data - remove and fallback
+      try { localStorage.removeItem('brands'); } catch {}
+      return initialBrandOptions;
+    }
+  });
+  // Persist brands to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('brands', JSON.stringify(brands));
+    } catch {
+      // ignore write errors
+    }
+  }, [brands]);
+  // Reset brands back to defaults
+  const handleResetBrands = () => {
+    setBrands(initialBrandOptions);
+    try { localStorage.removeItem('brands'); } catch {}
+    // Clear selectedBrand if it's no longer in defaults
+    if (selectedBrand && !initialBrandOptions.find(b => b.id === selectedBrand)) {
+      setSelectedBrand(null);
+    }
+  };
   // Handlers to add and remove brands
   const handleAddBrand = (brand) => {
     setBrands(prev => [...prev, brand]);
@@ -133,6 +160,18 @@ function App() {
   const selectedBrandObj = brands.find(b => b.id === selectedBrand);
   const selectedBrandColor = selectedBrandObj ? selectedBrandObj.color : '';
 
+  // Helper to detect if a hex color is light
+  const isLightColor = (hex) => {
+    if (typeof hex !== 'string' || !hex.startsWith('#') || hex.length !== 7) return false;
+    const r = parseInt(hex.substr(1, 2), 16);
+    const g = parseInt(hex.substr(3, 2), 16);
+    const b = parseInt(hex.substr(5, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 200;
+  };
+  const selectedIsHex = selectedBrandColor.startsWith('#');
+  const selectedIsLight = selectedIsHex && isLightColor(selectedBrandColor);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
       <div className="w-full max-w-4xl">
@@ -170,6 +209,7 @@ function App() {
                 onRandomize={handleRandomizeBrand}
                 onAddBrand={handleAddBrand}
                 onRemoveBrand={handleRemoveBrand}
+                onResetBrands={handleResetBrands}
               />
               
               <div className="mt-8 flex justify-end">
@@ -178,10 +218,10 @@ function App() {
                   disabled={!selectedBrand}
                   className={`py-3 px-6 rounded-full text-lg font-semibold transition-all ${
                     selectedBrand
-                      ? `${selectedBrandColor.startsWith('#') ? '' : selectedBrandColor} text-white hover:opacity-90`
+                      ? `${selectedIsHex ? '' : selectedBrandColor} ${selectedIsLight ? 'text-black' : 'text-white'} hover:opacity-90`
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
-                  style={selectedBrand && selectedBrandColor.startsWith('#') ? { backgroundColor: selectedBrandColor } : {}}
+                  style={selectedBrand && selectedIsHex ? { backgroundColor: selectedBrandColor } : {}}
                 >
                   Next Step →
                 </button>
@@ -204,8 +244,8 @@ function App() {
                   <div className="p-4 rounded-xl border border-gray-200 flex items-center">
                     <span className="font-medium text-gray-700 mr-2">Selected Brand:</span>
                     <span
-                      className={`${selectedBrandColor.startsWith('#') ? '' : selectedBrandColor} text-white font-bold py-1 px-3 rounded-md`}
-                      style={selectedBrandColor.startsWith('#') ? { backgroundColor: selectedBrandColor } : {}}
+                      className={`${selectedIsHex ? '' : selectedBrandColor} ${selectedIsLight ? 'text-black' : 'text-white'} font-bold py-1 px-3 rounded-md`}
+                      style={selectedIsHex ? { backgroundColor: selectedBrandColor } : {}}
                     >
                       {selectedBrand}
                     </span>
@@ -232,10 +272,10 @@ function App() {
                   disabled={!selectedSurface}
                   className={`py-3 px-6 rounded-full text-lg font-semibold transition-all ${
                     selectedSurface
-                      ? `${selectedBrandColor.startsWith('#') ? '' : selectedBrandColor} text-white hover:opacity-90`
+                      ? `${selectedIsHex ? '' : selectedBrandColor} ${selectedIsLight ? 'text-black' : 'text-white'} hover:opacity-90`
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
-                  style={selectedSurface && selectedBrandColor.startsWith('#') ? { backgroundColor: selectedBrandColor } : {}}
+                  style={selectedSurface && selectedIsHex ? { backgroundColor: selectedBrandColor } : {}}
                 >
                   Generate Brief
                 </button>
