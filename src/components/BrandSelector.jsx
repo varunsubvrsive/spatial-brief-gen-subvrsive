@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import useSlotMachineAnimation from '../hooks/useSlotMachineAnimation';
 import SlotMachine from './SlotMachine';
 
-const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAddBrand, onRemoveBrand }) => {
+const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAddBrand, onRemoveBrand, onResetBrands }) => {
   if (!brands || brands.length === 0) return null;
 
   // Modal state and inputs for managing brands
@@ -12,6 +12,9 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
   // State for new brand color and presets
   const [newColor, setNewColor] = useState('#E2453B');
   const presetColors = ['#E2453B', '#4285F4', '#34A853', '#FBBC05', '#EA4335', '#A142F4', '#F442A1', '#2E2E2E', '#FFFFFF'];
+  // Validation flags
+  const isDuplicate = brands.some(b => b.id.toLowerCase() === newName.trim().toLowerCase());
+  const isValidHex = /^#([0-9A-Fa-f]{6})$/.test(newColor);
 
   // Use the dynamic brands prop for options
   const filteredBrandOptions = brands; // brands passed in have id, name, color, emoji
@@ -26,6 +29,17 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
   // Handle randomize button click
   const handleRandomize = () => {
     startAnimation();
+  };
+
+  // Helper to detect if a hex color is light (for contrast)
+  const isLightColor = (hex) => {
+    if (typeof hex !== 'string' || !hex.startsWith('#') || hex.length !== 7) return false;
+    const r = parseInt(hex.substr(1, 2), 16);
+    const g = parseInt(hex.substr(3, 2), 16);
+    const b = parseInt(hex.substr(5, 2), 16);
+    // Calculate brightness per ITU-R BT.601
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 200;
   };
 
   return (
@@ -53,14 +67,15 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
         selectedOption={selectedOption}
         renderItem={option => {
           const isHex = typeof option.color === 'string' && option.color.startsWith('#');
+          const textColorClass = isHex && isLightColor(option.color) ? 'text-black' : 'text-white';
           return (
             <div className="w-full brand-slot-item">
               <div
-                className={`${isHex ? '' : option.color} text-white font-medium rounded-lg px-4 w-0.25 flex items-center justify-center gap-2`}
+                className={`${isHex ? '' : option.color} ${textColorClass} font-medium rounded-lg px-4 w-0.25 flex items-center justify-center gap-2`}
                 style={{ ...(isHex ? { backgroundColor: option.color } : {}), height: 'calc(40px + 6px)' }}
               >
                 <span className="text-xl mr-1">{option.emoji}</span>
-                <span className="text-white text-lg font-semibold">{option.name}</span>
+                <span className={`${textColorClass} text-lg font-semibold`}>{option.name}</span>
               </div>
             </div>
           );
@@ -69,13 +84,12 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {filteredBrandOptions.map(brand => {
           const isHex = typeof brand.color === 'string' && brand.color.startsWith('#');
+          const textColorClass = isHex && isLightColor(brand.color) ? 'text-black' : 'text-white';
           return (
             <button
               key={brand.id}
               onClick={() => onSelectBrand(brand.id)}
-              className={`${isHex ? '' : brand.color} ${
-                selectedBrand === brand.id ? 'ring-4 ring-offset-2 ring-gray-400' : ''
-              } rounded-xl p-4 text-white font-medium select-option flex items-center justify-center h-24 transition-all`}
+              className={`${isHex ? '' : brand.color} ${selectedBrand === brand.id ? 'ring-4 ring-offset-2 ring-gray-400' : ''} rounded-xl p-4 ${textColorClass} font-medium select-option flex items-center justify-center h-24 transition-all`}
               style={isHex ? { backgroundColor: brand.color } : {}}
             >
               <span className="mr-2">{brand.emoji}</span> {brand.name}
@@ -96,10 +110,21 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Manage Brands</h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-              >&times;</button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure? This will erase all your custom brands.')) {
+                      onResetBrands();
+                      setIsModalOpen(false);
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-700 text-sm"
+                >Reset to Defaults</button>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                >&times;</button>
+              </div>
             </div>
             <div className="flex space-x-2 overflow-x-auto mb-4">
               {brands.map(brand => (
@@ -166,8 +191,14 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
                 />
               </div>
             </div>
+            {isDuplicate && (
+              <p className="text-sm text-red-500 mb-2">This brand name already exists.</p>
+            )}
+            {!isValidHex && (
+              <p className="text-sm text-red-500 mb-2">Please enter a valid hex code (e.g. #AABBCC).</p>
+            )}
             <button
-              disabled={!newEmoji || !newName}
+              disabled={!newEmoji || !newName || isDuplicate || !isValidHex}
               onClick={() => {
                 onAddBrand({ id: newName, name: newName, emoji: newEmoji, color: newColor });
                 setNewEmoji('');
@@ -175,7 +206,7 @@ const BrandSelector = ({ brands, selectedBrand, onSelectBrand, onRandomize, onAd
                 setNewColor(presetColors[0]);
               }}
               className={`w-full py-2 px-4 rounded-md text-white font-medium transition-colors ${
-                newEmoji && newName ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                newEmoji && newName && !isDuplicate && isValidHex ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
               Add Brand
