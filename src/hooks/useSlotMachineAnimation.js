@@ -56,9 +56,22 @@ const useSlotMachineAnimation = (options, onSelect, duration = 2000) => {
     }
   }, []);
   
-  // Update options ref when options change
+  // Update options ref and rebuild repeated options when options change
   useEffect(() => {
     optionsRef.current = options;
+    // Rebuild repeatedOptions for dynamic updates
+    const result = [];
+    for (let i = 0; i < options.length * REPEAT_COUNT; i++) {
+      const option = options[i % options.length];
+      result.push({ ...option, _key: `${option.id}-${i}` });
+    }
+    repeatedOptionsRef.current = result;
+    // Recalculate center index and reset scroll position
+    centerIndexRef.current = Math.floor(result.length / 2);
+    setState(prev => ({
+      ...prev,
+      scrollPosition: centerIndexRef.current * ITEM_HEIGHT
+    }));
   }, [options]);
   
   // Animation step

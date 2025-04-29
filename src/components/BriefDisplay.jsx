@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-const BriefDisplay = ({ brand, surface, brief }) => {
+const BriefDisplay = ({ brand, surface, brief, brandEmoji }) => {
   const briefRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
@@ -125,13 +125,7 @@ const BriefDisplay = ({ brand, surface, brief }) => {
 
         <div className="flex items-center justify-center space-x-3 mb-6">
           <div className="flex flex-col items-center">
-            <span className="text-3xl">
-              {brand === 'Coca-Cola' && '🥤'}
-              {brand === 'Fanta' && '🍊'}
-              {brand === 'Powerade' && '🔵'}
-              {brand === 'Minute Maid' && '🧃'}
-              {brand === 'Jack&Coke' && '⚫'}
-            </span>
+            <span className="text-3xl">{brandEmoji}</span>
             <span className="text-sm mt-1 text-gray-900">{brand}</span>
           </div>
           
