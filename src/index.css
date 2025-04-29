@@ -19,6 +19,64 @@
 .brand-dasani { background-color: #009DDC; }
 .brand-text-dasani { color: #009DDC; }
 
+/* Slot Machine Animation */
+.slot-machine-container {
+  border-radius: 12px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  height: 56px; /* Tight single-value box */
+  background-color: #f3f4f6;
+  border: 2px solid #d1d5db; /* subtle border highlight */
+}
+
+.slot-machine-reel {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: transform 0.1s linear;
+}
+
+.slot-machine-item {
+  flex-shrink: 0;
+  border-radius: 8px;
+  margin: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  overflow: visible; /* Allow content to exceed the container height slightly */
+}
+
+/* Brand slot styling for centered appearance */
+.brand-slot-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove or reduce mask gradients */
+.slot-machine-container::before,
+.slot-machine-container::after {
+  display: none;
+}
+
+/* Remove the previous animation keyframes that cause jumpiness */
+@keyframes slotMachineReel {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(0%); }
+}
+
+/* Remove bounce animation that creates jumpiness */
+.animate-bounce {
+  animation: none;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

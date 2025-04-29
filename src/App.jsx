@@ -23,13 +23,15 @@ function App() {
   ];
 
   const handleRandomizeBrand = () => {
-    const randomBrand = brands[Math.floor(Math.random() * brands.length)];
-    setSelectedBrand(randomBrand);
+    // This function will be called after the animation finishes 
+    // and the component selects a brand, so we don't need
+    // to set the brand here directly
   };
 
   const handleRandomizeSurface = () => {
-    const randomSurface = surfaces[Math.floor(Math.random() * surfaces.length)];
-    setSelectedSurface(randomSurface);
+    // This function will be called after the animation finishes
+    // and the component selects a surface, so we don't need
+    // to set the surface here directly
   };
 
   const generateBrief = () => {
@@ -128,9 +130,6 @@ function App() {
               >
                 Begin Journey 🚀
               </button>
-            </div>
-            <div className="absolute bottom-4 right-4">
-              <a href="#" className="text-red-500 hover:underline">Reference</a>
             </div>
           </div>
         )}
